@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html style="height: 100%">
+
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="./style.css" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+</head>
+
+<body style="height: 100%; margin: 0;overflow: hidden;">
+
+    <img class="flower" src="./flower_light.png" width="300" height="300" />
+    <img class="flower sector" src="./flower_dark.png" width="300" height="300" />
+    <!--信封动画-->
+    <div class="flower envelopCon">
+        <img class="envelop1" id="envelop_header" src="./envelope1.png" />
+        <img class="envelop3" src="./envelope_content.png" />
+        <img class="envelop2" src="./envelope2.png" />
+        <!--信封下半部分两层，一层底色，z-index < content那一层，一层外侧，z-index > content那一层。这是内侧-->
+        <div class="envelop2" style="background-color: #e9e5e1;z-index: 6;"></div>
+    </div>
+    <svg>
+        <clipPath id="myPath">
+            <path id="path"></path>
+        </clipPath>
+    </svg>
+
+    <!-- reading -->
+    <div class="readtxt"></div>
+    <!-- cloud 们 -->
+    <img src="./cloud3.png" class="cloud c1" style="top: -50px;left:-450px;z-index: 1;" />
+    <img src="./cloud1.png" class="cloud c1" style="top: 150px;left: -500px;z-index: 3;" />
+    <img src="./cloud2.png" class="cloud c1" style="top: 310px;z-index: 5;left: -480px;" />
+    <img src="./cloud4.png" class="cloud c1" style="top: 490px;left: -495px;z-index: 7;" />
+    <img src="./cloud4.png" class="cloud c2" style="top: -90px;z-index: 2;right:-480px;" />
+    <img src="./cloud2.png" class="cloud c2" style="top: 100px;right: -500px;z-index: 4;" />
+    <img src="./cloud1.png" class="cloud c2" style="top: 260px;z-index: 6;right: -480px;" />
+    <img src="./cloud3.png" class="cloud c2" style="top: 440px;right: -495px;z-index: 8;" />
+    <!--  -->
+
+    <!-- 热气球 -->
+    <img src="./balloon.jpg" width="100%" height="100%" class="balloon">
+
+
+
+    <script type="text/javascript">
+
+        var vow = "Night gathers, and now my watch begins. It shall not end until my death. I shall take no wife, hold no lands, father no children. I shall wear no crowns and win no glory. I shall live and die at my post. I am the sword in the darkness. I am the watcher on the walls. I am the fire that burns against the cold, the light that brings the dawn, the horn that wakes the sleepers, the shield that guards the realms of men. I pledge my life and honor to the Night's Watch, for this night and all the nights to come. "
+
+
+        var flowerRate; // flower动画的rate 
+        var distance = 0; // 当前所有动画的位移加在一起，不能在负方向有位移，即必须小于0
+        var flowerMaxDistance // 完全搞定一个花需要的总位移
+
+        //------------------------------ 信封动画分三个
+        var envelopeAnimation_1_MaxDistance  // 信封上部的旋转
+        var envelopeAnimation_2_MaxDistance  // 信纸逐渐移出
+        var envelopeAnimation_3_MaxDistance  // 信内容 rotate  translate When Scale 's animation
+        //-----------------------------------------
+        //当然是最开心的reading动画啦
+        var readingAnimation_MaxDistance
+        var cloudAnimation_MaxDistance
+
+
+
+        var currentTouchObj // 当前touchmove的坐标，也可以理解为上一个触摸点，具体请看move方法的代码
+        var currentTouchMoveDistance // 最近一次滑动的距离
+        var previousTouchmoveTime
+        var absoluteTouchmoveTime // 最近一次滑动对应的时间段长度
+        var screenHeight
+
+        // 计算动画的所有基础属性
+        function calculateBase() {
+            screenHeight = parseInt(window.innerHeight)
+            flowerMaxDistance = parseFloat((screenHeight * 7 / 10))
+            envelopeAnimation_1_MaxDistance = parseFloat((flowerMaxDistance + (screenHeight / 5)))
+            envelopeAnimation_2_MaxDistance = parseFloat((envelopeAnimation_1_MaxDistance + (screenHeight / 5)))
+            envelopeAnimation_3_MaxDistance = envelopeAnimation_2_MaxDistance + 100
+            readingAnimation_MaxDistance = envelopeAnimation_3_MaxDistance + screenHeight * 3;
+            cloudAnimation_MaxDistance = readingAnimation_MaxDistance + 100
+        }
+        calculateBase();
+
+
+        var timeout1 // 信封自己动的动画，从完全伸出信纸，这时候你只要滑动1px，你都会开始一个信封旋转，平移同时放大的动画，这时候你也可以滑动，但是无效，当然这段动画也对应一个位移，固定为10px
+        var isInTimeout1 = false
+        var timeout2 // cloud 动画
+        var isInTimeout2 = false
+        var inertanceInterval  // 惯性滑动的定时器
+
+
+        var touchstartX, touchstartY
+        document.addEventListener("touchstart", function (e) {
+            clearInterval(inertanceInterval)
+            touchstartX = e.touches[0].pageX
+            touchstartY = e.touches[0].pageY
+            currentTouchObj = e.touches[0]
+        })
+        document.addEventListener("touchend", function (e) {
+            var endSpeed = (currentTouchMoveDistance / absoluteTouchmoveTime).toFixed(2) // 近似于最后移动的瞬时速度
+            var finalTime = absoluteTouchmoveTime;
+            console.log("currentTouchMoveDistance:" + currentTouchMoveDistance)
+            if(Math.abs(endSpeed) < 0.2)return;
+            var factor = 100;//开始100%
+            var endpositionY = currentTouchObj.pageY
+            inertanceInterval = setInterval(function () {
+                factor -= 5
+                if(factor < 0){
+                    clearInterval(inertanceInterval)
+                    return
+                }
+                var d = endSpeed * (factor / 100) * finalTime
+                console.log("d: " + d + " " + endSpeed * (factor / 100))
+                endpositionY += d
+                var e = {
+                    touches: [{pageY: undefined}]
+                }
+                e.touches[0].pageY = endpositionY
+                doTouchmove(e)
+            }, 20)
+        })
+        document.addEventListener("touchmove", function (e) {
+            doTouchmove(e)
+        })
+
+
+        function doTouchmove(e) {
+            var absoluteMoveDistance = e.touches[0].pageY - currentTouchObj.pageY // 相对于上一个触摸点的位移
+            absoluteTouchmoveTime = (new Date()).valueOf() - previousTouchmoveTime
+            currentTouchMoveDistance = absoluteMoveDistance
+            currentTouchObj = e.touches[0]
+            previousTouchmoveTime = (new Date()).valueOf();
+
+            // var gy = e.touches[0].pageY - touchstartY; // 相对于触摸起始点的位移
+            var currentDistance = (distance + absoluteMoveDistance)  // 当前的位移
+            if (Math.abs(distance) < flowerMaxDistance) { // 只要当前move之前的状态是花没画完，那么现在就要画花
+                beforeDrawFlower(currentDistance)
+            } else if (Math.abs(distance) < envelopeAnimation_1_MaxDistance) {
+                // 判断是否是信封动画1
+                drawEnvelop1(currentDistance)
+            } else if (Math.abs(distance) < envelopeAnimation_2_MaxDistance) {
+                drawEnvelop2(currentDistance)
+            } else if (Math.abs(distance) < envelopeAnimation_3_MaxDistance) {
+                if (!isInTimeout1) { // 表示没有正在执行信封3 start动画，那么现在可以执行正向的动画
+                    drawEnvelop3Forward();
+                }
+            } else if (parseInt(Math.abs(distance)) == parseInt(envelopeAnimation_3_MaxDistance) && absoluteMoveDistance >= 0) {
+                // 执行反向的信封3动画
+                if (!isInTimeout1) {
+                    drawEnvelop3Backward();
+                }
+            } else if (Math.abs(distance) < readingAnimation_MaxDistance) {
+                drawReadTxt(currentDistance)
+            } else if (Math.abs(distance) < cloudAnimation_MaxDistance && absoluteMoveDistance < 0) {
+                if (!isInTimeout2) {
+                    drawCloudAnimation(0)
+                }
+            } else if (parseInt(Math.abs(distance)) <= parseInt(cloudAnimation_MaxDistance) && absoluteMoveDistance >= 0) {
+                if (!isInTimeout2) {
+                    drawCloudAnimation(1)
+                }
+            }
+
+
+
+            // 这里我们必须要在每个move结束前，累加distance，用来累加的值就是当前move的距离
+            if (!isInTimeout1 && !isInTimeout2) { // Animation期间  不接受位移累加
+                distance += absoluteMoveDistance
+            }
+            if (distance > 0) distance = 0;
+        }
+
+
+        function drawCloudAnimation(direction) {//direction 表示距离前进还是后退，0：前进  1：后退
+            isInTimeout2 = true
+            if (direction == 0) {
+                //开启定时器，在云儿全部合上的时候切换下一页
+                setTimeout(function () {
+                    document.getElementsByClassName("balloon")[0].style.display = "block";
+                }, 1300)
+            } else if (direction == 1) {
+                //开启定时器，在云儿全部合上的时候关闭这一页
+                setTimeout(function () {
+                    document.getElementsByClassName("balloon")[0].style.display = "none";
+                }, 1300)
+            }
+            timeout2 = setTimeout(function () {
+                isInTimeout2 = false;
+                if (direction == 0) {
+                    distance = -1 * cloudAnimation_MaxDistance
+                } else if (direction == 1) {
+                    distance = -1 * (readingAnimation_MaxDistance - 1)
+                }
+            }, 2600)
+
+            var lefts = document.getElementsByClassName("c1");
+            for (let index = 0; index < lefts.length; index++) {
+                var dom = lefts[index];
+                dom.classList.remove("cloudleft_closethenopen_animation_class");
+            }
+            var rights = document.getElementsByClassName("c2");
+            for (let index = 0; index < rights.length; index++) {
+                var dom = rights[index];
+                dom.classList.remove("cloudright_closethenopen_animation_class");
+            }
+            setTimeout(function () {
+                var lefts = document.getElementsByClassName("c1");
+                for (let index = 0; index < lefts.length; index++) {
+                    var dom = lefts[index];
+                    dom.classList.add("cloudleft_closethenopen_animation_class");
+                }
+                var rights = document.getElementsByClassName("c2");
+                for (let index = 0; index < rights.length; index++) {
+                    var dom = rights[index];
+                    dom.classList.add("cloudright_closethenopen_animation_class");
+                }
+            }, 0)
+        }
+
+
+        function drawReadTxt(distance) {
+            if (isInTimeout1) return;
+
+            // 将信的内容变模糊，以便我们显示文字
+            var envelop_content = document.getElementsByClassName("envelop3")[0];
+            if (!envelop_content.classList.contains("fade")) {
+                envelop_content.classList.remove("undofade");
+                envelop_content.classList.add("fade");
+            }
+            //-----------------
+
+            var words = vow.split(' ')
+            var readingAnimation_MaxDistance_abs = readingAnimation_MaxDistance - envelopeAnimation_3_MaxDistance;
+            var rightIndex = (Math.abs(distance) - envelopeAnimation_3_MaxDistance) / readingAnimation_MaxDistance_abs * words.length
+            rightIndex = parseInt(rightIndex)
+            if (rightIndex >= words.length) {
+                rightIndex = words.length - 1;
+            }
+            var indexInVow = find(vow, ' ', rightIndex)
+            if (!indexInVow || indexInVow < 0) indexInVow = 0
+            document.getElementsByClassName("readtxt")[0].innerHTML = vow.substring(0, indexInVow)
+        }
+
+
+        function drawEnvelop3Backward() {
+            var envelop_content = document.getElementsByClassName("envelop3")[0];
+
+
+            // 清空下一个动画reading的文字，且恢复信内容的模糊
+            document.getElementsByClassName("readtxt")[0].innerHTML = ""
+            if (!envelop_content.classList.contains("undofade")) {
+                envelop_content.classList.remove("fade");
+                envelop_content.classList.add("undofade");
+            }
+            //------------------------
+
+            isInTimeout1 = true
+            // 开始反向执行我们的信旋转变大动画
+            envelop_content.classList.remove("rotateAndScaleEnvelopContent_class_forward");
+            envelop_content.classList.add("rotateAndScaleEnvelopContent_class_backward");
+            timeout1 = setTimeout(function () {
+                isInTimeout1 = false
+                distance = -1 * (envelopeAnimation_2_MaxDistance - 1)
+            }, 1100)
+        }
+
+        function drawEnvelop3Forward() {
+            isInTimeout1 = true
+            // 开始我们的信旋转变大动画
+            var envelop_content = document.getElementsByClassName("envelop3")[0];
+            envelop_content.classList.remove("rotateAndScaleEnvelopContent_class_backward");
+            envelop_content.classList.add("rotateAndScaleEnvelopContent_class_forward");
+            timeout1 = setTimeout(function () {
+                distance = -1 * envelopeAnimation_3_MaxDistance
+                isInTimeout1 = false
+            }, 1100)
+        }
+
+
+        function drawEnvelop2(distance) { //抽出信纸的动画
+            // 将信封上部的z-index降到小于信的content的z-index
+            var envelop_header = document.getElementById("envelop_header");
+            // console.log(envelop_header.style)
+            envelop_header.style.zIndex = 5
+            var envelopeAnimation_2_MaxDistance_abs = envelopeAnimation_2_MaxDistance - envelopeAnimation_1_MaxDistance
+            var movedistance = (Math.abs(distance) - envelopeAnimation_1_MaxDistance) / envelopeAnimation_2_MaxDistance_abs * 60
+            var top = 40 - movedistance
+            if (top > 40) {
+                top = 40
+            }
+            var envelop_content = document.getElementsByClassName("envelop3")[0];
+            envelop_content.style.top = top + 'px';
+        }
+
+
+        function drawEnvelop1(distance) { // 信封第一层动画,必须改变信封header的index
+            var envelopeAnimation_1_MaxDistance_abs = envelopeAnimation_1_MaxDistance - flowerMaxDistance
+            var deg = (Math.abs(distance) - flowerMaxDistance) / envelopeAnimation_1_MaxDistance_abs * 180
+            if (deg > 180) {
+                deg = 180
+            }
+            deg = 180 - deg
+            var envelop1 = document.getElementsByClassName("envelop1");
+            envelop1[0].style.transform = 'rotateX(' + deg + 'deg)';
+            envelop1[0].style.zIndex = 9
+        }
+
+
+        // 根据距离计算花的角度，then invoke {drawFlower} method
+        function beforeDrawFlower(currentDistance) {
+            var notabsRate = (currentDistance / screenHeight * 10 / 7).toFixed(2)
+            flowerRate = Math.abs(notabsRate)
+            if (flowerRate > 1) {
+                flowerRate = 1;
+            } else if (notabsRate > 0 && notabsRate > distance) {
+                flowerRate = 0;
+            }
+            drawFlower(360 * flowerRate)
+        }
+
+        function drawFlower(angle) {
+            var radius = 212;
+            // x y对应在这个flower矩形图片的四条边上的某个点，我们让这个点沿着顺时针方向移动，我们接下来的任务就是计算它
+            var radius = 212; //圆半径
+            var isBig = 1
+            var xymap = getXAndYFromACircle(150, 150, radius, angle)
+            document.getElementById("path").setAttribute("d", "M362 150 A" + radius + " " + radius + " 0 " + 1 + " 1 " + xymap.x + " " + xymap.y + " L150 150");
+        }
+
+
+        /**
+        * 根据角度获取在圆上的坐标   0度是圆最右侧的点
+        */
+        function getXAndYFromACircle(centerX, centerY, radius, angle) {
+            var xy = {}
+            xy.x = parseInt(centerX + radius * Math.cos(angle * Math.PI / 180))
+            xy.y = parseInt(centerY + radius * Math.sin(angle * Math.PI / 180))
+            return xy
+        }
+
+        // 在一个字符串中搜索一段字符的第n个位置的索引，n从0开始，0表示没有
+        function find(str, searchstr, n) {
+            if (n == 0) return 0;
+            var resultIndex = str.indexOf(searchstr)
+            for (var index = 0; index < n; index++) {
+                if (index != n - 1) {
+                    resultIndex = str.indexOf(searchstr, resultIndex + 1)
+                } else {
+                    return resultIndex
+                }
+            }
+        }
+
+
+    </script>
+</body>
+
+</html>

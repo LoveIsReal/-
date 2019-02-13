@@ -1,0 +1,159 @@
+.sector {
+    clip-path: url(#myPath);
+}
+
+
+.flower {
+    transform: translate3d(-50%, -50%, 0);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+}
+
+.envelopCon {
+    height: 100px;
+    width: 110px;
+}
+
+.envelop1 {
+    transform: rotateX(180deg);
+    transform-origin: 50% 100%;
+    position: absolute;
+    top: 0;
+    z-index: 9;
+    width: 100%;
+    height: 36px;
+}
+
+.envelop2 {
+    position: absolute;
+    bottom: 0;
+    z-index: 8;
+    height: 64px;
+    width: 100%;
+}
+
+
+.envelop3 {
+    transform: rotateZ(90deg);
+    top: 40px;
+    position: absolute;
+    z-index: 7;
+    height: 65px;
+    width: 40px;
+    left: 36px;
+}
+
+.fade {
+    transition: all 0.5s linear;
+    filter: blur(1px);
+}
+
+.undofade {
+    transition: all 0.2s linear;
+    opacity: 1;
+}
+
+.rotateAndScaleEnvelopContent_class_forward {
+    -webkit-animation: rotateAndScaleEnvelopContent_forward 1s 1 ease-out;
+    animation-fill-mode: forwards;
+}
+
+/* 正向执行信封3动画 */
+
+@-webkit-keyframes rotateAndScaleEnvelopContent_forward {
+    0% {
+        transform: rotateZ(90deg)
+    }
+    30% {
+        transform: rotateZ(0deg);
+        z-index: 100;
+    }
+    100% {
+        top: 0px;
+        z-index: 100;
+        transform: scale(11)
+    }
+}
+
+.rotateAndScaleEnvelopContent_class_backward {
+    -webkit-animation: rotateAndScaleEnvelopContent_backward 1s 1 ease-out;
+    animation-fill-mode: forwards;
+}
+
+/* 反向执行信封3动画 */
+
+@-webkit-keyframes rotateAndScaleEnvelopContent_backward {
+    0% {
+        top: 0px;
+        z-index: 100;
+        transform: scale(11)
+    }
+    70% {
+        transform: rotateZ(90deg);
+        z-index: 7;
+    }
+    100% {
+        transform: rotateZ(90deg)
+    }
+}
+
+.readtxt {
+    position: fixed;
+    top: 50px;
+    left: 20px;
+    font-size: 20px;
+    right: 20px;
+    color: #333;
+    font-family: -webkit-pictograph;
+    text-align: justify;
+    line-height: 35px;
+    font-weight: 400;
+}
+
+.cloud {
+    width: 450px;
+    height: 270px;
+    position: fixed;
+}
+
+
+.cloudleft_closethenopen_animation_class {
+    -webkit-animation: cloudleft_closethenopen_animation 2.5s 1 ease-in-out;
+    animation-fill-mode: forwards;
+}
+
+@-webkit-keyframes cloudleft_closethenopen_animation {
+    0% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(300px);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+.cloudright_closethenopen_animation_class {
+    -webkit-animation: cloudright_closethenopen_animation 2.5s 1 ease-in-out;
+    animation-fill-mode: forwards;
+}
+
+@-webkit-keyframes cloudright_closethenopen_animation {
+    0% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(-300px);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+.balloon{
+    position: fixed;
+    display: none;
+    top: 0;
+    left: 0;
+}
