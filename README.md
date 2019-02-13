@@ -1,6 +1,8 @@
 ### 一个模仿18年蚂蚁森林公益账单效果的h5
 ![演示图](https://note.youdao.com/yws/api/personal/file/1F8BF048096C4669BA1C768BB16966A0?method=download&shareKey=f7b2c4bdb6af151d86ca585662df041d)
 
+[演示地址（访问很慢。。。）](https://loveisreal.github.io/AntForestImitation_H5/)
+
 模仿的不是页面内容，而是动画的操作和效果。
 
 比如：
