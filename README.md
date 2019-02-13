@@ -99,6 +99,6 @@ isInTimeout1 = false表示还没有执行任何这个信封Animation
 定时结束是等于上一个动画的最大距离 -1，这个 -1 是为了配合上面move的那个if条件
 
 
-### 4.惯性滑动
+#### 4.惯性滑动
 具体做法就是touchmove记录最新的位置和duration，且在touchend中启用interval 递减的累加distance，且调用touchmove的内部过程。
 （具体实现看代码）
